@@ -281,7 +281,7 @@ def printProcessBar(sumCount, doneCount, width, isPrintDownloadSpeed=False):
         print('\r\t{0}/{1} {2}{3} {4:.2f}%'.format(sumCount, doneCount, useCount*'■', spaceCount*'□', precent), file=sys.stdout, flush=True, end='')
 
 # m3u8下载器
-def m3uVideo8Downloader():
+def m3u8VideoDownloader():
     global title
     global logFile
     global m3u8Url
@@ -329,13 +329,11 @@ def m3uVideo8Downloader():
     downloadSpeed = 0
     downloadedBytes = 0
     if mutliDownloadTs(tsList):
-        print("\tts下载完成---------------------")
         logFile.write("\tts下载完成---------------------\n")
     # 4、合并ts
     print("\t4、开始合并ts...")
     logFile.write("\t4、开始合并ts...\n")
     if mergeTs(cachePath, cachePath + "/cache.flv", cryptor, len(tsList)):
-        print("\tts合并完成---------------------")
         logFile.write("\tts合并完成---------------------\n")
     else:
         print(keyText)
@@ -375,7 +373,7 @@ if __name__ == '__main__':
         try:
             print("{0} 开始下载:".format(m3u8Info[0]))
             logFile.write("{0} 开始下载:\n".format(m3u8Info[0]))
-            if m3uVideo8Downloader():
+            if m3u8VideoDownloader():
                 # 成功下载完一个m3u8则清空logFile
                 logFile.seek(0)
                 logFile.truncate()
