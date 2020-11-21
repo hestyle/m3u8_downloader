@@ -5,6 +5,7 @@
 import os
 import sys
 import m3u8
+import time
 import requests
 import traceback
 import threadpool
@@ -42,15 +43,19 @@ rootUrlPath = None
 # title
 title = None
 # ts count
-sumCount = None
+sumCount = 0
 # 已处理的ts
-doneCount = None
+doneCount = 0
 # cache path
 cachePath = saveRootDirPath + "/cache"
 # log path
 logPath = cachePath + "/log.log"
 # log file
 logFile = None
+# download bytes(0.5/1 s)
+downloadedBytes = 0
+# download speed
+downloadSpeed = 0
 
 # 1、下载m3u8文件
 def getM3u8Info():
@@ -139,6 +144,8 @@ def mutliDownloadTs(playlist):
     global sumCount
     global doneCount
     global taskThreadPool
+    global downloadedBytes
+    global downloadSpeed
     taskList = []
     # 每个ts单独作为一个task
     for index in range(len(playlist)):
@@ -152,7 +159,11 @@ def mutliDownloadTs(playlist):
     requests = threadpool.makeRequests(downloadTs, taskList)
     [taskThreadPool.putRequest(req) for req in requests]
     # 等待所有任务处理完成
-    taskThreadPool.wait()
+    while doneCount < sumCount:
+        # 统计1秒钟下载的byte
+        beforeDownloadedBytes = downloadedBytes
+        time.sleep(1)
+        downloadSpeed = downloadedBytes - beforeDownloadedBytes
     print("")
     return True
 
@@ -163,6 +174,7 @@ def downloadTs(playlist, index):
     global doneCount
     global cachePath
     global rootUrlPath
+    global downloadedBytes
     succeed = False
     while not succeed:
         # 文件名格式为 "00000001.ts"，index不足8位补充0
@@ -177,11 +189,13 @@ def downloadTs(playlist, index):
             if response.status_code == 200:
                 expected_length = int(response.headers.get('Content-Length'))
                 actual_length = len(response.content)
+                # 累计下载的bytes
+                downloadedBytes += actual_length
                 if expected_length > actual_length:
                     raise Exception("分片下载不完整")
                 outputFp.write(response.content)
                 doneCount += 1
-                printProcessBar(sumCount, doneCount, 50)
+                printProcessBar(sumCount, doneCount, 50, isPrintDownloadSpeed=True)
                 logFile.write("\t分片{0:0>8} url = {1} 下载成功！".format(index, tsUrl))
                 succeed = True
         except Exception as exception:
@@ -245,13 +259,26 @@ def ffmpegConvertToMp4(inputFilePath, ouputFilePath):
         logFile.write(inputFilePath + "转换失败！\n")
         return False
 
-# 8、模拟输出进度条
-def printProcessBar(sumCount, doneCount, width):
+# 8、模拟输出进度条(默认不打印网速)
+def printProcessBar(sumCount, doneCount, width, isPrintDownloadSpeed=False):
+    global downloadSpeed
     precent = doneCount / sumCount
     useCount = int(precent * width)
     spaceCount = int(width - useCount)
     precent = precent*100
-    print('\t{0}/{1} {2}{3} {4:.2f}%'.format(sumCount, doneCount, useCount*'■', spaceCount*'□', precent), file=sys.stdout, flush=True, end='\r')
+    if isPrintDownloadSpeed:
+        # downloadSpeed的单位是B/s, 超过1024*1024转换为MiB/s, 超过1024转换为KiB/s
+        if downloadSpeed > 1048576:
+            print('\r\t{0}/{1} {2}{3} {4:.2f}% {5:.2f}MiB/s\t'.format(sumCount, doneCount, useCount * '■', spaceCount * '□', precent, downloadSpeed / 1048576),
+                  file=sys.stdout, flush=True, end='')
+        elif downloadSpeed > 1024:
+            print('\r\t{0}/{1} {2}{3} {4:.2f}% {5:.2f}KiB/s\t'.format(sumCount, doneCount, useCount * '■', spaceCount * '□', precent, downloadSpeed / 1024),
+                  file=sys.stdout, flush=True, end='')
+        else:
+            print('\r\t{0}/{1} {2}{3} {4:.2f}% {5:.2f}B/s\t'.format(sumCount, doneCount, useCount * '■', spaceCount * '□', precent, downloadSpeed),
+                  file=sys.stdout, flush=True, end='')
+    else:
+        print('\r\t{0}/{1} {2}{3} {4:.2f}%'.format(sumCount, doneCount, useCount*'■', spaceCount*'□', precent), file=sys.stdout, flush=True, end='')
 
 # m3u8下载器
 def m3uVideo8Downloader():
@@ -259,6 +286,8 @@ def m3uVideo8Downloader():
     global logFile
     global m3u8Url
     global cachePath
+    global downloadedBytes
+    global downloadSpeed
     # 1、下载m3u8
     print("\t1、开始下载m3u8...")
     logFile.write("\t1、开始下载m3u8...\n")
@@ -296,6 +325,9 @@ def m3uVideo8Downloader():
     # 3、下载ts
     print("\t3、开始下载ts...")
     logFile.write("\t3、开始下载ts...\n")
+    # 清空bytes计数器
+    downloadSpeed = 0
+    downloadedBytes = 0
     if mutliDownloadTs(tsList):
         print("\tts下载完成---------------------")
         logFile.write("\tts下载完成---------------------\n")
