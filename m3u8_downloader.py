@@ -269,13 +269,13 @@ def printProcessBar(sumCount, doneCount, width, isPrintDownloadSpeed=False):
     if isPrintDownloadSpeed:
         # downloadSpeed的单位是B/s, 超过1024*1024转换为MiB/s, 超过1024转换为KiB/s
         if downloadSpeed > 1048576:
-            print('\r\t{0}/{1} {2}{3} {4:.2f}% {5:.2f}MiB/s\t'.format(sumCount, doneCount, useCount * '■', spaceCount * '□', precent, downloadSpeed / 1048576),
+            print('\r\t{0}/{1} {2}{3} {4:.2f}% {5:>7.2f}MiB/s'.format(sumCount, doneCount, useCount * '■', spaceCount * '□', precent, downloadSpeed / 1048576),
                   file=sys.stdout, flush=True, end='')
         elif downloadSpeed > 1024:
-            print('\r\t{0}/{1} {2}{3} {4:.2f}% {5:.2f}KiB/s\t'.format(sumCount, doneCount, useCount * '■', spaceCount * '□', precent, downloadSpeed / 1024),
+            print('\r\t{0}/{1} {2}{3} {4:.2f}% {5:>7.2f}KiB/s'.format(sumCount, doneCount, useCount * '■', spaceCount * '□', precent, downloadSpeed / 1024),
                   file=sys.stdout, flush=True, end='')
         else:
-            print('\r\t{0}/{1} {2}{3} {4:.2f}% {5:.2f}B/s\t'.format(sumCount, doneCount, useCount * '■', spaceCount * '□', precent, downloadSpeed),
+            print('\r\t{0}/{1} {2}{3} {4:.2f}% {5:>7.2f}B/s'.format(sumCount, doneCount, useCount * '■', spaceCount * '□', precent, downloadSpeed),
                   file=sys.stdout, flush=True, end='')
     else:
         print('\r\t{0}/{1} {2}{3} {4:.2f}%'.format(sumCount, doneCount, useCount*'■', spaceCount*'□', precent), file=sys.stdout, flush=True, end='')
