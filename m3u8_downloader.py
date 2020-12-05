@@ -372,6 +372,18 @@ if __name__ == '__main__':
         m3u8Info = rowData.split(',')
         title = m3u8Info[0]
         m3u8Url = m3u8Info[1]
+
+        # title中去除 \  /  :  *  ?  "  <  >  |字符，Windows系统中文件命名不能包含这些字符
+        title = title.replace('\\', ' ', sys.maxsize)
+        title = title.replace('/', ' ', sys.maxsize)
+        title = title.replace(':', ' ', sys.maxsize)
+        title = title.replace('*', ' ', sys.maxsize)
+        title = title.replace('?', ' ', sys.maxsize)
+        title = title.replace('"', ' ', sys.maxsize)
+        title = title.replace('<', ' ', sys.maxsize)
+        title = title.replace('>', ' ', sys.maxsize)
+        title = title.replace('|', ' ', sys.maxsize)
+
         try:
             print("{0} 开始下载:".format(m3u8Info[0]))
             logFile.write("{0} 开始下载:\n".format(m3u8Info[0]))
