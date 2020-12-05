@@ -164,6 +164,8 @@ def mutliDownloadTs(playlist):
         beforeDownloadedBytes = downloadedBytes
         time.sleep(1)
         downloadSpeed = downloadedBytes - beforeDownloadedBytes
+        # 计算网速后打印一次
+        printProcessBar(sumCount, doneCount, 50, True)
     print("")
     return True
 
@@ -275,7 +277,7 @@ def printProcessBar(sumCount, doneCount, width, isPrintDownloadSpeed=False):
             print('\r\t{0}/{1} {2}{3} {4:.2f}% {5:>7.2f}KiB/s'.format(sumCount, doneCount, useCount * '■', spaceCount * '□', precent, downloadSpeed / 1024),
                   file=sys.stdout, flush=True, end='')
         else:
-            print('\r\t{0}/{1} {2}{3} {4:.2f}% {5:>7.2f}B/s'.format(sumCount, doneCount, useCount * '■', spaceCount * '□', precent, downloadSpeed),
+            print('\r\t{0}/{1} {2}{3} {4:.2f}% {5:>7.2f}B/s  '.format(sumCount, doneCount, useCount * '■', spaceCount * '□', precent, downloadSpeed),
                   file=sys.stdout, flush=True, end='')
     else:
         print('\r\t{0}/{1} {2}{3} {4:.2f}%'.format(sumCount, doneCount, useCount*'■', spaceCount*'□', precent), file=sys.stdout, flush=True, end='')
