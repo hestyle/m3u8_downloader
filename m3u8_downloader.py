@@ -252,6 +252,8 @@ def ffmpegConvertToMp4(inputFilePath, ouputFilePath):
         logFile.write(inputFilePath + " 路径不存在！\n")
         return False
     cmd = r'.\lib\ffmpeg -i "{0}" -vcodec copy -acodec copy "{1}"'.format(inputFilePath, ouputFilePath)
+    if sys.platform == "darwin":
+        cmd = r'./lib/ffmpeg -i "{0}" -vcodec copy -acodec copy "{1}"'.format(inputFilePath, ouputFilePath)
     if os.system(cmd) == 0:
         print(inputFilePath + "转换成功！")
         logFile.write(inputFilePath + "转换成功！\n")
@@ -369,7 +371,7 @@ if __name__ == '__main__':
         rowData = rowData.strip('\n')
         if rowData == "":
             break
-        m3u8Info = rowData.split(',')
+        m3u8Info = rowData.split('|')
         title = m3u8Info[0]
         m3u8Url = m3u8Info[1]
 
