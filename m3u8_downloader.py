@@ -9,6 +9,7 @@ import time
 import requests
 import traceback
 import threadpool
+from urllib.parse import urlparse
 from Crypto.Cipher import AES
 
 headers = {
@@ -78,10 +79,14 @@ def getM3u8Info():
                 m3u8Url = nowM3u8Url
                 rootUrlPath = m3u8Url[0:m3u8Url.rindex('/')]
                 continue
-            expected_length = int(response.headers.get('Content-Length'))
-            actual_length = len(response.content)
-            if expected_length > actual_length:
-                raise Exception("m3u8下载不完整")
+
+            contentLength = response.headers.get('Content-Length')
+            if contentLength:
+                expected_length = int(contentLength)
+                actual_length = len(response.content)
+                if expected_length > actual_length:
+                    raise Exception("m3u8下载不完整")
+
             print("\t{0}下载成功！".format(m3u8Url))
             logFile.write("\t{0}下载成功！".format(m3u8Url))
             rootUrlPath = m3u8Url[0:m3u8Url.rindex('/')]
@@ -98,8 +103,11 @@ def getM3u8Info():
         for rowData in response.text.split('\n'):
             # 寻找响应内容的中的m3u8
             if rowData.endswith(".m3u8"):
-                m3u8Url = m3u8Url.replace("index.m3u8", rowData)
+                scheme = urlparse(m3u8Url).scheme
+                netloc = urlparse(m3u8Url).netloc
+                m3u8Url = scheme + "://" + netloc + rowData
                 rootUrlPath = m3u8Url[0:m3u8Url.rindex('/')]
+
                 return getM3u8Info()
         # 遍历未找到就返回None
         print("\t{0}响应未寻找到m3u8！".format(response.text))
@@ -357,6 +365,14 @@ if __name__ == '__main__':
     if not (os.path.exists(m3u8InputFilePath)):
         print("{0}文件不存在！".format(m3u8InputFilePath))
         exit(0)
+    # 如果输出目录不存在就创建
+    if not (os.path.exists(saveRootDirPath)):
+        os.mkdir(saveRootDirPath)
+
+    # 如果记录错误文件不存在就创建
+    if not (os.path.exists(errorM3u8InfoDirPath)):
+        open(errorM3u8InfoDirPath, 'w+')
+
     m3u8InputFp = open(m3u8InputFilePath, "r", encoding="utf-8")
     # 设置error的m3u8 url输出
     errorM3u8InfoFp = open(errorM3u8InfoDirPath, "a+", encoding="utf-8")
